@@ -1,55 +1,79 @@
-import axios from "axios";
 import { BookingPayload, CancelPayload, TimeSlot } from "../types";
 
-const API_URL = "http://localhost:3000";
+// Simulate API storage with in-memory data
+let timeSlots: TimeSlot[] = [
+  { time: "10:00 AM", isBooked: false, bookedBy: null },
+  { time: "11:00 AM", isBooked: false, bookedBy: null },
+  { time: "12:00 PM", isBooked: false, bookedBy: null },
+  { time: "1:00 PM", isBooked: false, bookedBy: null },
+  { time: "2:00 PM", isBooked: false, bookedBy: null },
+  { time: "3:00 PM", isBooked: false, bookedBy: null },
+  { time: "4:00 PM", isBooked: false, bookedBy: null },
+];
 
+// Simulate network delay
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// GET /slots - Retrieve all time slots
 export const fetchTimeSlots = async (): Promise<TimeSlot[]> => {
-  try {
-    const response = await axios.get(`${API_URL}/slots`);
-    console.log("Res 23:", response.data);
-
-    return response.data;
-  } catch (error) {
-    console.error("Failed to fetch time slots:", error);
-    throw error;
-  }
+  await delay(500); // Simulate network delay
+  return [...timeSlots];
 };
 
+// POST /book - Book a slot
 export const bookTimeSlot = async (
   payload: BookingPayload
 ): Promise<TimeSlot[]> => {
-  try {
-    const response = await axios.post(`${API_URL}/book`, payload, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("Res 23:", response.data.slot);
+  await delay(800); // Simulate network delay
 
-    return response.data.slot;
-  } catch (error: any) {
-    console.error("Failed to book the time slot:", error.response.data.message);
-    throw new Error(error.response.data.message || "Booking failed");
+  const { name, time } = payload;
+
+  // Check if slot is already booked
+  const slotIndex = timeSlots.findIndex((slot) => slot.time === time);
+
+  if (slotIndex === -1) {
+    throw new Error("Time slot not found");
   }
+
+  if (timeSlots[slotIndex].isBooked) {
+    throw new Error("This time slot is already booked");
+  }
+
+  // Update the slot
+  timeSlots[slotIndex] = {
+    ...timeSlots[slotIndex],
+    isBooked: true,
+    bookedBy: name,
+  };
+
+  return [...timeSlots];
 };
 
+// POST /cancel - Cancel a booking
 export const cancelBooking = async (
   payload: CancelPayload
 ): Promise<TimeSlot[]> => {
-  try {
-    const response = await axios.post(`${API_URL}/cancel`, payload, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("Cancellation response:", response.data);
+  await delay(800); // Simulate network delay
 
-    return response.data;
-  } catch (error: any) {
-    console.error(
-      "Failed to cancel the time slot:",
-      error.response.data.message
-    );
-    throw new Error(error.response.data.message || "Cancellation failed");
+  const { time } = payload;
+
+  // Find the slot
+  const slotIndex = timeSlots.findIndex((slot) => slot.time === time);
+
+  if (slotIndex === -1) {
+    throw new Error("Time slot not found");
   }
+
+  if (!timeSlots[slotIndex].isBooked) {
+    throw new Error("This time slot is not booked");
+  }
+
+  // Update the slot
+  timeSlots[slotIndex] = {
+    ...timeSlots[slotIndex],
+    isBooked: false,
+    bookedBy: null,
+  };
+
+  return [...timeSlots];
 };
